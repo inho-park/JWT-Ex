@@ -3,7 +3,9 @@ package com.example.jwtex.controller;
 import com.example.jwtex.domain.User;
 import com.example.jwtex.dto.ResponseDTO;
 import com.example.jwtex.dto.UserDTO;
+import com.example.jwtex.security.TokenProvider;
 import com.example.jwtex.service.UserService;
+
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private TokenProvider tokenProvider;
 
     @PostMapping("/signup")
     public ResponseEntity<?> register(@RequestBody UserDTO dto) {
@@ -42,8 +46,8 @@ public class UserController {
 
         } catch(Exception e) {
             // 유저 정보는 항상 하나이므로 리스트로 만들어야 하는 ReponseDTO 를 사용하지 않고 UserDTO 를 리턴
-            ResponseDTO reponseDTO = ResponseDTO.builder().error(e.getMessage()).build();
-            return ResponseEntity.badRequest().body(reponseDTO);
+            ResponseDTO responseDTO = ResponseDTO.builder().error(e.getMessage()).build();
+            return ResponseEntity.badRequest().body(responseDTO);
         }
     }
 
@@ -55,9 +59,11 @@ public class UserController {
         );
 
         if(user != null) {
+            final String token = tokenProvider.create(user);
             final UserDTO responseUserDTO = UserDTO.builder()
                     .username(user.getUsername())
                     .id(user.getId())
+                    .token(token)
                     .build();
             return ResponseEntity.ok().body(responseUserDTO);
 
@@ -68,7 +74,4 @@ public class UserController {
             return ResponseEntity.badRequest().body(responseDTO);
         }
     }
-
-//    @PostMapping("/todo")
-//    public ReponseDTO<TodoDTO>
 }
